@@ -1,0 +1,86 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 15,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "dev",
+      "displayName": "Development Build",
+      "description": "Native build with warnings and debug info",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMD_PROC_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Coverage Build",
+      "description": "Native build with coverage flags enabled",
+      "inherits": "dev",
+      "cacheVariables": {
+        "CMD_PROC_ENABLE_COVERAGE": "ON"
+      }
+    },
+    {
+      "name": "arm-embedded",
+      "displayName": "ARM Cortex-M (Cross-Compile)",
+      "description": "Example cross-compilation configuration using arm-none-eabi-gcc",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "Generic",
+        "CMAKE_SYSTEM_PROCESSOR": "arm",
+        "CMAKE_C_COMPILER": "arm-none-eabi-gcc",
+        "CMAKE_CXX_COMPILER": "arm-none-eabi-g++",
+        "CMAKE_BUILD_TYPE": "MinSizeRel",
+        "BUILD_TESTING": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev",
+      "configurePreset": "dev"
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage"
+    },
+    {
+      "name": "arm-embedded",
+      "configurePreset": "arm-embedded"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "dev",
+      "configurePreset": "dev",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
