@@ -1,0 +1,5 @@
+add_test([=[CmdProcTest.BasicAssertions]=]  /home/thumalamanish/projects/cmd_proc/build/test/test_cmd_proc [==[--gtest_filter=CmdProcTest.BasicAssertions]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[CmdProcTest.BasicAssertions]=]  PROPERTIES WORKING_DIRECTORY /home/thumalamanish/projects/cmd_proc/build/test SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[CmdProcTest.DummyFunctionReturnsZero]=]  /home/thumalamanish/projects/cmd_proc/build/test/test_cmd_proc [==[--gtest_filter=CmdProcTest.DummyFunctionReturnsZero]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[CmdProcTest.DummyFunctionReturnsZero]=]  PROPERTIES WORKING_DIRECTORY /home/thumalamanish/projects/cmd_proc/build/test SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  test_cmd_proc_TESTS CmdProcTest.BasicAssertions CmdProcTest.DummyFunctionReturnsZero)

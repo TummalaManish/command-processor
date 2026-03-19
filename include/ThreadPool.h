@@ -5,7 +5,7 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
-#include <expected>
+#include <functional>
 #include <future>
 #include <mutex>
 #include <thread>
@@ -63,8 +63,6 @@ private:
 
   class ThreadCntx final {
   public:
-    friend ThreadPool;
-
     enum class ThreadState : std::uint8_t {
       ACTIVE,
       INACTIVE,
@@ -72,37 +70,68 @@ private:
       NOT_INITIALIZED
     };
 
-    /*
-     * @breif Moves the job to execution.
-     */
-    bool move_job(std::function<void(void) &&>);
-
-    // TODO: This might have internal consistey problems.
-    ThreadState getThreadState() const {
-      ThreadState l_threadState{ThreadState::NOT_INITIALIZED};
-      {
-        lk_gd _{m_mtx};
-        l_threadState = m_threadState;
+    std::future<void> move_job(std::function<void(void)> &&f_job) {
+      unq_lk l_lck{m_mtx};
+      if (ThreadState::INACTIVE == m_threadState) {
+        m_packedJob = std::packaged_task<void(void)>{std::move(f_job)};
+        m_threadState = ThreadState::ACTIVE;
+        auto l_future = m_packedJob.get_future();
+        l_lck.unlock();
+        m_cv.notify_one();
+        return l_future;
       }
-      return l_threadState;
+      return {};
     }
 
     std::thread::native_handle_type getHandel() {
       return m_thread.native_handle();
     }
 
-    ~ThreadCntx();
+    ~ThreadCntx() {
+      {
+        lk_gd _{m_mtx};
+        m_isReadyToTerminate = true;
+      }
+      m_cv.notify_all();
+
+      if (m_thread.joinable()) {
+        m_thread.join();
+      }
+    }
+
+    ThreadCntx(const ThreadCntx &) = delete;
+    ThreadCntx(ThreadCntx &&) = delete;
+    ThreadCntx &operator=(const ThreadCntx &) = delete;
+    ThreadCntx &operator=(ThreadCntx &&) = delete;
 
   private:
     /*
-     * @breif Loop that thread internally runs.
+     *@breif Loop that thread internally runs.
      */
-    void threadLoop();
+    void threadLoop() {
+      unq_lk l_lck{m_mtx};
+      m_threadState = ThreadState::INACTIVE;
+
+      while (not m_isReadyToTerminate) {
+        m_cv.wait(l_lck, [this]() {
+          return (m_isReadyToTerminate || m_packedJob.valid());
+        });
+
+        if (not m_isReadyToTerminate) {
+          l_lck.unlock();
+          m_packedJob();
+          l_lck.lock();
+          m_threadState = ThreadState::INACTIVE;
+        }
+      }
+      m_threadState = ThreadState::DEAD;
+    }
 
     ThreadState m_threadState{ThreadState::NOT_INITIALIZED};
     mutable std::mutex m_mtx{};
     std::condition_variable m_cv{};
-    std::function<void(void)> m_job{};
+    bool m_isReadyToTerminate{};
+    std::packaged_task<void(void)> m_packedJob{};
     std::thread m_thread{};
   };
 
@@ -121,7 +150,7 @@ public:
   /*
    * @brief Waits for the threads to be initialized.
    */
-  bool waitForInit(const std::chrono::milliseconds duration);
+  bool waitForInit(const std::chrono::milliseconds duration) { return false; }
 
   /*
    * @brief Waits for the threads to be initialized.

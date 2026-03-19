@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcmd-proc.a "CMakeFiles/cmd-proc.dir/source/command.cpp.o"
+/usr/bin/ranlib libcmd-proc.a

@@ -1,0 +1,5 @@
+if(EXISTS "/home/thumalamanish/projects/cmd_proc/build/test/test_cmd_proc[1]_tests.cmake")
+  include("/home/thumalamanish/projects/cmd_proc/build/test/test_cmd_proc[1]_tests.cmake")
+else()
+  add_test(test_cmd_proc_NOT_BUILT test_cmd_proc_NOT_BUILT)
+endif()
